@@ -4,13 +4,13 @@ https://arxiv.org/abs/1812.08008
 
 <br/>
 <b>Model Results:</b>
-[![Alt text](https://img.youtube.com/vi/I7SoJzRPCPY/0.jpg)](https://www.youtube.com/watch?v=I7SoJzRPCPY)
 
 <img src="https://raw.githubusercontent.com/DhruvJawalkar/PyTorch-OpenPose-Realtime-Multi-Person-2D-Pose-Estimation-using-Part-Affinity-Fields/master/model-results/10.png" align="center" width="100%"/>
 
 
 <img src="https://raw.githubusercontent.com/DhruvJawalkar/PyTorch-OpenPose-Realtime-Multi-Person-2D-Pose-Estimation-using-Part-Affinity-Fields/master/model-results/12.png" align="center" width="100%"/>
 
+<a href="https://www.youtube.com/watch?v=I7SoJzRPCPY">demo video</a>
 
 <b>Joint Matching:</b> (With the help of predicted Part Affinity Field vectors)
 
