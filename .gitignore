@@ -1,0 +1,6 @@
+
+.DS_Store
+.ipynb_checkpoints/Untitled-checkpoint.ipynb
+__pycache__/CONSTANTS.cpython-36.pyc
+*.pyc
+*.json
