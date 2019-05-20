@@ -66,7 +66,7 @@ def get_stage_block(in_channels, out_channels):
                          )
 
 class PAF_Stages(nn.Module):
-    def __init__(self, in_channels=128, paf_out_channels=38, in_training=False):
+    def __init__(self, in_channels=128, paf_out_channels=38+8, in_training=False):
         super(PAF_Stages, self).__init__()
         self.Stage1 = get_stage_block(in_channels, paf_out_channels)
         self.Stage2 = get_stage_block(in_channels+paf_out_channels, paf_out_channels)
@@ -116,7 +116,7 @@ class PAF_Stages(nn.Module):
             return o4
 
 class Heatmap_Stages(nn.Module):
-    def __init__(self, in_channels=128+38, hm_out_channels=17+1, in_training=False):
+    def __init__(self, in_channels=128+38+8, hm_out_channels=17+1, in_training=False):
         super(Heatmap_Stages, self).__init__()
         self.Stage1 = get_stage_block(in_channels, hm_out_channels)
         self.Stage2 = get_stage_block(in_channels+hm_out_channels, hm_out_channels)

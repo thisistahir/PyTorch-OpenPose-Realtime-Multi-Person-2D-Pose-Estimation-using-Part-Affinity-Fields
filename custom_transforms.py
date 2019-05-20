@@ -14,19 +14,19 @@ class Denorm(object):
         return tensor.mul(self.std).add(self.mean)
     
 class RandomCrop(object):
-    def __init__(self, size=368, p=0.75):
+    def __init__(self, size=368, p=1):
         self.sz = size
         self.p = p
         
     def __call__(self, sample):
-        img = sample['image']
+        image = sample['image']
         keypoints = sample['keypoints']
-        H, W = img.height, img.width
+        H, W = image.height, image.width
         
         if (W>self.sz and H>self.sz and np.random.random()>(1-self.p)):
             x = np.random.randint(W - self.sz)
             y = np.random.randint(H - self.sz)
-            croped_img = img.crop(box=(x,y, x+self.sz, y+self.sz))
+            croped_img = image.crop(box=(x,y, x+self.sz, y+self.sz))
             
             keypoints[keypoints[:,:,0]<x] = np.array([0,0,0])
             keypoints[keypoints[:,:,1]<y] = np.array([0,0,0])
@@ -38,14 +38,15 @@ class RandomCrop(object):
         else: return sample
 
 class ResizeImgAndKeypoints(object):
-    def __init__(self, size=368, paf_sz=46):
+    def __init__(self, size=368):
         self.size = size
-        self.Resize = transforms.Resize((paf_sz, paf_sz))
+        self.paf_sz = int(size*46/368)
+        self.Resize = transforms.Resize((self.paf_sz, self.paf_sz))
     
     def __call__(self, sample):
-        im = sample['image']
+        image = sample['image']
         keypoints = sample['keypoints'].copy().astype(float) #2x17x3
-        IM_H, IM_W = im.height, im.width
+        IM_H, IM_W = image.height, image.width
         if(IM_H > IM_W):
             w = int(self.size*IM_W/IM_H)
             h = self.size
@@ -64,20 +65,20 @@ class ResizeImgAndKeypoints(object):
             keypoints[:,:,1] = keypoints[:,:,1]*(h/IM_H)
             keypoints[:,:,1][keypoints[:,:,2]>0] += self.size-h-pad_val
         
-        resized_img = ImageOps.expand(im.resize((w,h),resample=Image.BILINEAR), pad)
-        return { 'image' : resized_img , 'image_46x46': self.Resize(resized_img),'keypoints' : keypoints }
+        resized_img = ImageOps.expand(image.resize((w,h),resample=Image.BILINEAR), pad)
+        return { 'image' : resized_img , 'image_stg_input': self.Resize(resized_img),'keypoints' : keypoints }
 
 class FlipHR(object):
     def __init__(self, p=0.25):
         self.p = p
     
     def __call__(self, sample):
-        img = sample['image']
+        image = sample['image']
         keypoints = sample['keypoints']
         
         if np.random.random() > (1-self.p):
-            img = img.transpose(Image.FLIP_LEFT_RIGHT)
-            w, h = img.size
+            image = image.transpose(Image.FLIP_LEFT_RIGHT)
+            w, h = image.size
             keypoints[:, :, 0][keypoints[:, :, 2]>0] = w - keypoints[:, :, 0][keypoints[:, :, 2]>0]
             copy = keypoints.copy()
             keypoints[:,1,:], keypoints[:,2,:] = copy[:,2,:], copy[:,1,:]
@@ -89,7 +90,7 @@ class FlipHR(object):
             keypoints[:,13,:], keypoints[:,14,:] = copy[:,14,:], copy[:,13,:]
             keypoints[:,15,:], keypoints[:,16,:] = copy[:,16,:], copy[:,15,:]
         
-            return { 'image' : img, 'image_46x46': ImageOps.mirror(sample['image_46x46']) ,'keypoints' : keypoints }
+            return { 'image' : image, 'image_stg_input': ImageOps.mirror(sample['image_stg_input']) ,'keypoints' : keypoints }
         else: return sample
 
 class FlipUD(object):
@@ -97,12 +98,12 @@ class FlipUD(object):
         self.p = p
     
     def __call__(self, sample):
-        img = sample['image']
+        image = sample['image']
         keypoints = sample['keypoints']
         
         if np.random.random() > (1-self.p):
-            img = img.transpose(Image.FLIP_TOP_BOTTOM)
-            w, h = img.size
+            image = image.transpose(Image.FLIP_TOP_BOTTOM)
+            w, h = image.size
             keypoints[:, :, 1][keypoints[:, :, 2]>0] = h - keypoints[:, :, 1][keypoints[:, :, 2]>0]
             copy = keypoints.copy()
             keypoints[:,1,:], keypoints[:,2,:] = copy[:,2,:], copy[:,1,:]
@@ -114,7 +115,7 @@ class FlipUD(object):
             keypoints[:,13,:], keypoints[:,14,:] = copy[:,14,:], copy[:,13,:]
             keypoints[:,15,:], keypoints[:,16,:] = copy[:,16,:], copy[:,15,:]
         
-            return { 'image' : img, 'image_46x46': ImageOps.flip(sample['image_46x46']) ,'keypoints' : keypoints }
+            return { 'image' : image, 'image_stg_input': ImageOps.flip(sample['image_stg_input']) ,'keypoints' : keypoints }
         else: return sample
         
 class ColorJitter(object):
@@ -122,8 +123,8 @@ class ColorJitter(object):
         self.tfm = transforms.ColorJitter(brightness=brightness, contrast=contrast, saturation=saturation, hue=hue)
     
     def __call__(self, sample):
-        img = self.tfm(sample['image'])
-        return { 'image' : img, 'image_46x46': sample['image_46x46'], 'keypoints': sample['keypoints'] }
+        image = self.tfm(sample['image'])
+        return { 'image' : image, 'image_stg_input': sample['image_stg_input'], 'keypoints': sample['keypoints'] }
 
 class RandomGrayscale(object):
     def __init__(self, p=0.33):
@@ -131,14 +132,14 @@ class RandomGrayscale(object):
         self.gs = transforms.Grayscale(num_output_channels=3)
     
     def __call__(self, sample):
-        img = self.tfm(sample['image'])
-        if(len(img.getbands())<3):
-            img = self.gs(img)
-            sample['image_46x46'] = self.gs(sample['image_46x46'])
-        return { 'image' : img, 'image_46x46' : sample['image_46x46'], 'keypoints': sample['keypoints'] }
+        image = self.tfm(sample['image'])
+        if(len(image.getbands())<3):
+            image = self.gs(image)
+            sample['image_stg_input'] = self.gs(sample['image_stg_input'])
+        return { 'image' : image, 'image_stg_input' : sample['image_stg_input'], 'keypoints': sample['keypoints'] }
 
 class RandomRotateImgAndKeypoints(object):
-    def __init__(self, deg=40, p=0.9):
+    def __init__(self, deg=30, p=0.9):
         self.deg = deg
         self.p = p
     
@@ -157,13 +158,13 @@ class RandomRotateImgAndKeypoints(object):
     
     def __call__(self, sample):
         if(np.random.random()>(1-self.p)):
-            img = sample['image']
+            image = sample['image']
             keypoints = sample['keypoints'].copy()
             rand_deg = np.random.randint(-1*self.deg, self.deg+1)
-            img = img.rotate(rand_deg)
-            w, h = img.size
+            image = image.rotate(rand_deg)
+            w, h = image.size
             res = self.__rotate__((w/2, h/2), keypoints, rand_deg, h)
-            return { 'image' : img, 'image_46x46' : sample['image_46x46'].rotate(rand_deg) ,'keypoints' : res }
+            return { 'image' : image, 'image_stg_input' : sample['image_stg_input'].rotate(rand_deg) ,'keypoints' : res }
         else:
             return sample
 
@@ -173,7 +174,7 @@ class ToTensor(object):
     
     def __call__(self, sample):
         return { 'image' : self.ToTensor(sample['image']),
-                 'image_46x46' : self.ToTensor(sample['image_46x46']),
+                 'image_stg_input' : self.ToTensor(sample['image_stg_input']),
                  'pafs' : torch.tensor(sample['pafs'], dtype=torch.float),
                  'PAF_BINARY_IND' : torch.tensor(sample['PAF_BINARY_IND'], dtype=torch.uint8),
                  'heatmaps' : torch.tensor(sample['heatmaps'], dtype=torch.float),
