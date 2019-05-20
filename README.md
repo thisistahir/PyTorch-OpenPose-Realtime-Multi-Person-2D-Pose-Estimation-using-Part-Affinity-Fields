@@ -1,6 +1,16 @@
 # PyTorch-OpenPose-Realtime-Multi-Person-2D-Pose-Estimation-using-Part-Affinity-Fields
-PyTorch implementation of the latest Dec 2018 paper: 
+PyTorch implementation of the Dec 2018 paper: 
 https://arxiv.org/abs/1812.08008
+
+Go through estimate-pose.ipynb for training and evaluation code on sample image, video.
+
+Model has been trained on MS-COCO 2014 dataset on 368x368 and 184x184 resolutions (model-wts-368.ckpt, model-wts-184.ckpt). 
+
+Has additional PAF's from Shoulder->Wrist and Hip->Ankle for improved matching in crowded scenes.
+
+You can change the threholds for PAF map o/p values, Heatmap threshold and part matching threshold in CONFIG.py (for more, less conf joint preds vs less, more confident).  
+
+Part Matching formulation uses Munkres for one-one least cost matching. 
 
 <br/>
 <b>Model Results:</b>
