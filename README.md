@@ -1,8 +1,6 @@
 # PyTorch-OpenPose-Realtime-Multi-Person-2D-Pose-Estimation-using-Part-Affinity-Fields
 
-![output.gif](https://oregonstate.box.com/s/2s390ub7b5880o4qnrq3io5xdmxhjsxe) 
-
-https://oregonstate.box.com/s/2s390ub7b5880o4qnrq3io5xdmxhjsxe
+output.gif: https://oregonstate.box.com/s/2s390ub7b5880o4qnrq3io5xdmxhjsxe
 
 PyTorch implementation of the Dec 2018 paper: 
 https://arxiv.org/abs/1812.08008
